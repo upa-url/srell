@@ -1,0 +1,16 @@
+###############################################################################
+# Set default behavior to automatically normalize line endings.
+###############################################################################
+* text=auto eol=lf
+
+###############################################################################
+# Source files
+###############################################################################
+
+*.yml   text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+
+*.cpp   text eol=lf diff=cpp
+*.h     text eol=lf diff=cpp
+*.hpp   text eol=lf diff=cpp

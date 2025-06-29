@@ -1,0 +1,28 @@
+name: Download new version
+
+on:
+  schedule:
+    - cron: '10 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download new SRELL version if available
+        run: echo "srell_new_ver=$(./download-new-version.py)" >> "$GITHUB_ENV"
+
+      - name: Commit new version
+        if: env.srell_new_ver
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Update SRELL to ${{ env.srell_new_ver }}"
+          git tag -a v${{ env.srell_new_ver }} -m "SRELL ${{ env.srell_new_ver }}"
+          git push --follow-tags

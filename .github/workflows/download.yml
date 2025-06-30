@@ -11,11 +11,17 @@ permissions:
 jobs:
   download:
     runs-on: ubuntu-latest
+    outputs:
+      srell_new_ver: ${{ steps.getver.outputs.srell_new_ver }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Download new SRELL version if available
-        run: echo "srell_new_ver=$(./download-new-version.py)" >> "$GITHUB_ENV"
+        id: getver
+        run: |
+          srell_new_ver=$(./download-new-version.py)
+          echo "srell_new_ver=${srell_new_ver}" >> "$GITHUB_ENV"
+          echo "srell_new_ver=${srell_new_ver}" >> "$GITHUB_OUTPUT"
 
       - name: Commit new version
         if: env.srell_new_ver
@@ -26,3 +32,8 @@ jobs:
           git commit -m "Update SRELL to ${{ env.srell_new_ver }}"
           git tag -a v${{ env.srell_new_ver }} -m "SRELL ${{ env.srell_new_ver }}"
           git push --follow-tags
+
+  test:
+    needs: [download]
+    if: needs.download.outputs.srell_new_ver
+    uses: ./.github/workflows/test.yml

@@ -1,6 +1,6 @@
 /*****************************************************************************
 **
-**  SRELL (std::regex-like library) version 4.066
+**  SRELL (std::regex-like library) version 4.067
 **
 **  Copyright (c) 2012-2025, Nozomu Katoo. All rights reserved.
 **
@@ -991,7 +991,7 @@ public:
 		const_pointer data;
 		size_type size;
 
-		sa_view(const const_pointer p = NULL, const size_type s = 0) : data(p), size(s)
+		explicit sa_view(const const_pointer p = NULL, const size_type s = 0) : data(p), size(s)
 		{
 		}
 
@@ -1113,7 +1113,7 @@ public:
 	void resize(const size_type newsize)
 	{
 		if (newsize >= capacity_p1_)
-			reserve(newsize);
+			reserve_<16>(newsize);
 
 		size_ = newsize;
 	}
@@ -1122,7 +1122,7 @@ public:
 	{
 		size_type oldsize = size_;
 
-		oldresize_(newsize);
+		resize(newsize);
 		for (; oldsize < size_; ++oldsize)
 			buffer_[oldsize] = type;
 	}
@@ -1142,7 +1142,7 @@ public:
 		const size_type oldsize = size_;
 
 		if (++size_ >= capacity_p1_)
-			reserve(((size_ >> 8) + 1) << 8);
+			reserve_<16>(size_);
 
 		buffer_[oldsize] = n;
 	}
@@ -1184,7 +1184,7 @@ public:
 
 	simple_array &append(const const_pointer p, const size_type size)
 	{
-		oldresize_(size_ + size);
+		resize(size_ + size);
 		std::memcpy(buffer_ + size_ - size, p, size * sizeof (value_type));
 		return *this;
 	}
@@ -1192,9 +1192,10 @@ public:
 	simple_array &append(const simple_array &right)
 	{
 		const size_type oldsize = size_;
+		const size_type rightsize = right.size_;
 
-		oldresize_(size_ + right.size_);
-		std::memcpy(buffer_ + oldsize, right.buffer_, right.size_ * sizeof (ElemT));
+		resize(size_ + right.size_);
+		std::memcpy(buffer_ + oldsize, right.buffer_, rightsize * sizeof (ElemT));
 		return *this;
 	}
 
@@ -1208,7 +1209,7 @@ public:
 
 		const size_type oldsize = size_;
 
-		oldresize_(size_ + len);
+		resize(size_ + len);
 		std::memcpy(buffer_ + oldsize, right.buffer_ + pos, len * sizeof (ElemT));
 		return *this;
 	}
@@ -1330,11 +1331,22 @@ public:
 		}
 	}
 
-	void reserve(const size_type newsize)
+protected:
+
+	template <const size_type minsize>
+	void reserve_(size_type newsize)
 	{
 		if (newsize <= maxsize_)
 		{
 			const pointer oldbuffer = buffer_;
+			const size_type capa2 = newsize >= minsize ? capacity_p1_ << 1 : minsize;
+
+			if (newsize < capa2)
+			{
+				newsize = capa2;
+				if (newsize > maxsize_)
+					newsize = maxsize_;
+			}
 
 			buffer_ = static_cast<pointer>(std::realloc(static_cast<void *>(buffer_), newsize * sizeof (ElemT)));
 			capacity_p1_ = newsize + 1;
@@ -1350,13 +1362,11 @@ public:
 		throw std::bad_alloc();
 	}
 
-protected:
-
 	void move_forwards_(const size_type pos, const size_type count)
 	{
 		const size_type oldsize = size_;
 
-		oldresize_(size_ + count);
+		resize(size_ + count);
 
 		if (pos < oldsize)
 		{
@@ -1364,14 +1374,6 @@ protected:
 
 			std::memmove(base + count, base, (oldsize - pos) * sizeof (ElemT));
 		}
-	}
-
-	void oldresize_(const size_type newsize)
-	{
-		if (newsize >= capacity_p1_)
-			reserve(((newsize >> 8) + 1) << 8);
-
-		size_ = newsize;
 	}
 
 protected:
@@ -1406,7 +1408,7 @@ struct simple_stack : protected simple_array<char>
 		const size_type newsize = size_ + sizeof (T);
 
 		if (newsize >= capacity_p1_)
-			reserve(size_ + 256);
+			reserve_<256>(newsize);
 
 		std::memcpy(buffer_ + size_, &n, sizeof (T));
 		size_ = newsize;
@@ -1429,7 +1431,7 @@ struct simple_stack : protected simple_array<char>
 		const size_type newsize = size_ + add;
 
 		if (newsize >= capacity_p1_)
-			reserve(size_ + 256);
+			reserve_<256>(newsize);
 	}
 };
 //  simple_stack
@@ -3073,9 +3075,10 @@ const ui_l32 groupname_mapper<charT>::notfound;
 
 struct re_quantifier
 {
-	//  atleast and atmost: for check_counter.
+	//  atleast and atmost: for check_counter and roundbracket_close.
 	//  (Special case 1) in charcter_class, bol, eol, boundary, represents the offset and length
 	//    of the range in the array of character classes.
+	//  (Special case 1+) in NFA_states[0] holds a character class for one character lookahead.
 	//  (Special case 2) in roundbracket_open and roundbracket_pop atleast and atmost represent
 	//    the minimum and maximum bracket numbers respectively inside the brackets itself.
 	//  (Special case 3) in repeat_in_push and repeat_in_pop atleast and atmost represent the
@@ -5026,7 +5029,6 @@ private:
 		state_array piece;
 		state_array piece_with_quantifier;
 		re_quantifier quantifier;
-		re_quantifier piecesize;
 		range_pairs tmpcc;
 		state_type astate;
 		posdata_holder pos;
@@ -5046,7 +5048,7 @@ private:
 			switch (astate.char_num)
 			{
 			case meta_char::mc_rbraop:	//  '(':
-				if (!parse_group(piece, piecesize, curpos, end, cvars))
+				if (!parse_group(piece, astate.quantifier, curpos, end, cvars))
 					return false;
 				goto AFTER_PIECE_SET;
 
@@ -5060,7 +5062,7 @@ private:
 				{
 					ADD_POS:
 					transform_seqdata(piece, pos, cvars);
-					piecesize.set(pos.length.first, pos.length.second);
+					astate.quantifier.set(pos.length.first, pos.length.second);
 					goto AFTER_PIECE_SET;
 				}
 				tmpcc.swap(pos.ranges);
@@ -5245,7 +5247,6 @@ private:
 			SKIP_ICASE_CHECK_FOR_CHAR:
 
 			piece.push_back(astate);
-			piecesize = astate.quantifier;
 			AFTER_PIECE_SET:
 
 			if (piece.size())
@@ -5318,11 +5319,11 @@ private:
 //					piece_with_quantifier += piece;
 					;	//  Does nothing.
 				}
-				else if (!combine_piece_with_quantifier(piece_with_quantifier, piece, quantifier, piecesize))
+				else if (!combine_piece_with_quantifier(piece_with_quantifier, piece, quantifier, astate.quantifier))
 					return false;
 
-				piecesize.multiply(quantifier);
-				branchsize.add(piecesize);
+				astate.quantifier.multiply(quantifier);
+				branchsize.add(astate.quantifier);
 
 #if !defined(SRELL_FIXEDWIDTHLOOKBEHIND)
 
@@ -5546,11 +5547,11 @@ private:
 			if (this->number_of_brackets > constants::max_u32value)
 				return this->set_error(regex_constants::error_complexity);
 
-			rbstate.char_num = this->number_of_brackets;
+			rbstate.char_num = this->number_of_brackets++;
 			rbstate.next1 = 2;
 			rbstate.next2 = 1;
+			rbstate.quantifier.atleast = this->number_of_brackets;
 			piece.push_back(rbstate);
-			++this->number_of_brackets;
 
 			rbstate.type  = st_roundbracket_pop;
 			rbstate.next1 = 0;
@@ -5625,12 +5626,7 @@ private:
 			rbstate.next1 = 1;
 			rbstate.next2 = 1;
 
-			{
-				re_quantifier &rb_pop = piece[1].quantifier;
-
-				rb_pop.atleast = firststate.quantifier.atleast = rbstate.char_num + 1;
-				rb_pop.atmost = firststate.quantifier.atmost;
-			}
+			piece[1].quantifier.atmost = firststate.quantifier.atmost;
 			firststate.quantifier.is_greedy = piecesize.atleast != 0u;
 		}
 
@@ -10114,30 +10110,31 @@ SRELL_NO_VCWARNING_END
 
 			case st_roundbracket_open:	//  '(':
 				{
-					ST_ROUNDBRACKET_OPEN:
+					submatch_type &bracket = sstate.bracket[sstate.ssc.state->char_num];
+					ui_l32 extra = (bracket.counter.no + 1) != 0 ? 0 : 2;	//  To skip 0 and 1 after -1.
 					const re_quantifier &sq = sstate.ssc.state->quantifier;
 
-					sstate.expand((sq.atleast <= sq.atmost ? ((sizeof (submatchcore_type) + sizeof (counter_type)) * (sq.atmost - sq.atleast + 1)) : 0) + sizeof (submatchcore_type) + sizeof sstate.ssc);
-
-					for (ui_l32 brno = sstate.ssc.state->quantifier.atleast; brno <= sstate.ssc.state->quantifier.atmost; ++brno)
+					do
 					{
-						submatch_type &inner_bracket = sstate.bracket[brno];
+						sstate.expand((sq.atleast <= sq.atmost ? ((sizeof (submatchcore_type) + sizeof (counter_type)) * (sq.atmost - sq.atleast + 1)) : 0) + sizeof (submatchcore_type) + sizeof sstate.ssc);
 
-						sstate.push_sm(inner_bracket.core);
-						sstate.push_c(inner_bracket.counter);
-						inner_bracket.core.open_at = inner_bracket.core.close_at = sstate.srchend;
-						inner_bracket.counter.no = 0;
-						//  ECMAScript spec (3-5.1) 15.10.2.5, NOTE 3.
-						//  ECMAScript 2018 (ES9) 21.2.2.5.1, Note 3.
+						sstate.push_sm(bracket.core);
+						++bracket.counter.no;
+
+						for (ui_l32 brno = sstate.ssc.state->quantifier.atleast; brno <= sstate.ssc.state->quantifier.atmost; ++brno)
+						{
+							submatch_type &inner_bracket = sstate.bracket[brno];
+
+							sstate.push_sm(inner_bracket.core);
+							sstate.push_c(inner_bracket.counter);
+							inner_bracket.core.open_at = inner_bracket.core.close_at = sstate.srchend;
+							inner_bracket.counter.no = 0;
+							//  ECMAScript spec (3-5.1) 15.10.2.5, NOTE 3.
+							//  ECMAScript 2018 (ES9) 21.2.2.5.1, Note 3.
+						}
+						sstate.push_bt(sstate.ssc);
 					}
-
-					submatch_type &bracket = sstate.bracket[sstate.ssc.state->char_num];
-
-					sstate.push_sm(bracket.core);
-					sstate.push_bt(sstate.ssc);
-
-					if (++bracket.counter.no == 0)
-						goto ST_ROUNDBRACKET_OPEN;
+					while (extra--);
 
 					(!reverse ? bracket.core.open_at : bracket.core.close_at) = sstate.ssc.iter;
 				}
@@ -10145,11 +10142,6 @@ SRELL_NO_VCWARNING_END
 
 			case st_roundbracket_pop:	//  '/':
 				{
-					submatch_type &bracket = sstate.bracket[sstate.ssc.state->char_num];
-
-					--bracket.counter.no;
-					sstate.pop_sm(bracket.core);
-
 					for (ui_l32 brno = sstate.ssc.state->quantifier.atmost; brno >= sstate.ssc.state->quantifier.atleast; --brno)
 					{
 						submatch_type &inner_bracket = sstate.bracket[brno];
@@ -10157,6 +10149,11 @@ SRELL_NO_VCWARNING_END
 						sstate.pop_c(inner_bracket.counter);
 						sstate.pop_sm(inner_bracket.core);
 					}
+
+					submatch_type &bracket = sstate.bracket[sstate.ssc.state->char_num];
+
+					--bracket.counter.no;
+					sstate.pop_sm(bracket.core);
 				}
 				goto NOT_MATCHED0;
 
@@ -10173,18 +10170,19 @@ SRELL_NO_VCWARNING_END
 					{
 						if (sstate.ssc.state->next_state1->type != st_check_counter)
 						{
+							//  .atleast is 0 (*) or 1 (+). To rewind correctly, if .counter being
+							//  equal to -1 is incremented the next value must be 2, skipping 0 and 1.
 							if (bracket.counter.no > sstate.ssc.state->quantifier.atleast)
 								goto NOT_MATCHED0;
 
 							sstate.ssc.state = sstate.ssc.state->next_state2;
 								//  Accepts 0 width match and exits.
 						}
-						else
+						else	//  A pair with check_counter.
 						{
-							//  A pair with check_counter.
 							const counter_type counter = sstate.counter[sstate.ssc.state->next_state1->char_num];
 
-							if (counter.no > sstate.ssc.state->next_state1->quantifier.atleast)
+							if (counter.no > sstate.ssc.state->quantifier.atleast)
 								goto NOT_MATCHED0;	//  Takes a captured string in the previous loop.
 
 							sstate.ssc.state = sstate.ssc.state->next_state1;

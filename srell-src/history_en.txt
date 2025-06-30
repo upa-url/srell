@@ -1,3 +1,7 @@
+20250608; version 4.067:
+  * Adjusted internal memory handling.
+  * Various minor improvements.
+
 20250518; version 4.066:
   * Fixed three minor issues being inconsistent with the ECMAScript
     specification:
@@ -38,7 +42,7 @@
       internal counter, or 0-width match checkers reaches 0xFFFFFFFF,
       now error_complexity is thrown.
     * When parsing nested groups and/or character classes (only in the
-      v-flags mode), if the total depth of their levels reaches
+      v-flags mode), if the total depth of their levels exceeds
       SRELL_MAX_DEPTH (the default value is 256), error_complexity is
       thrown to avoid a stack overflow.
   * Fixed a problem that caused a compilation error when SRELL_NO_ICASE

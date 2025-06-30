@@ -1,3 +1,7 @@
+20250608; version 4.067:
+  ・内部のメモリ処理の調整。
+  ・その他改良など。
+
 20250518; version 4.066:
   ・ECMAScriptの仕様に準拠していない振る舞いが3箇所あったので修正。
     1. "" に対して /()*/ で検索した時、$1がundefined相当にならず "" にな
@@ -32,9 +36,9 @@
       総数、このどれかが32bit値の最大値に達した場合にはerror_complexity
       をthrowするようにしました。
     ・入れ子になっているグループや文字クラス（Vフラグモード時のみ）をパ
-      ーズする時、階層の深さの累計がSRELL_MAX_DEPTH（初期値は256）に到達
-      したらスタック溢れ防止のためerror_complexityをthrowするようにしま
-      した。
+      ーズする時、階層の深さの累計がSRELL_MAX_DEPTH（初期値は256）を超え
+      たらスタック溢れ防止のためerror_complexityをthrowするようにしまし
+      た。
   ・SRELL_NO_ICASEをdefineするとコンパイルできなくなっていた問題を修正。
   ・独自拡張のうち、3つのイテレータを引数に取り、かつmatch_resultsを引数
     に取らないregex_search()のoverloadを廃止。

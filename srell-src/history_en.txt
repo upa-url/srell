@@ -1,3 +1,10 @@
+20250814; version 4.068:
+  * Updated unicode/updataout3.cpp:
+    1. This file was unable to be compiled because the name of an
+       internal function in SRELL was changed in version 4.065.
+    2. Added a new option to decide whether string literals are escaped
+       or not at runtime, instead of compile-time.
+
 20250608; version 4.067:
   * Adjusted internal memory handling.
   * Various minor improvements.

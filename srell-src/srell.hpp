@@ -1,6 +1,6 @@
 /*****************************************************************************
 **
-**  SRELL (std::regex-like library) version 4.067
+**  SRELL (std::regex-like library) version 4.068
 **
 **  Copyright (c) 2012-2025, Nozomu Katoo. All rights reserved.
 **
@@ -10113,28 +10113,32 @@ SRELL_NO_VCWARNING_END
 					submatch_type &bracket = sstate.bracket[sstate.ssc.state->char_num];
 					ui_l32 extra = (bracket.counter.no + 1) != 0 ? 0 : 2;	//  To skip 0 and 1 after -1.
 					const re_quantifier &sq = sstate.ssc.state->quantifier;
+					const typename ss_type::btstack_size_type addsize = (sq.atleast <= sq.atmost ? ((sizeof (submatchcore_type) + sizeof (counter_type)) * (sq.atmost - sq.atleast + 1)) : 0) + sizeof (submatchcore_type) + sizeof sstate.ssc;
 
-					do
+					TWOMORE:
+					sstate.expand(addsize);
+
+					sstate.push_sm(bracket.core);
+					++bracket.counter.no;
+
+					for (ui_l32 brno = sstate.ssc.state->quantifier.atleast; brno <= sstate.ssc.state->quantifier.atmost; ++brno)
 					{
-						sstate.expand((sq.atleast <= sq.atmost ? ((sizeof (submatchcore_type) + sizeof (counter_type)) * (sq.atmost - sq.atleast + 1)) : 0) + sizeof (submatchcore_type) + sizeof sstate.ssc);
+						submatch_type &inner_bracket = sstate.bracket[brno];
 
-						sstate.push_sm(bracket.core);
-						++bracket.counter.no;
-
-						for (ui_l32 brno = sstate.ssc.state->quantifier.atleast; brno <= sstate.ssc.state->quantifier.atmost; ++brno)
-						{
-							submatch_type &inner_bracket = sstate.bracket[brno];
-
-							sstate.push_sm(inner_bracket.core);
-							sstate.push_c(inner_bracket.counter);
-							inner_bracket.core.open_at = inner_bracket.core.close_at = sstate.srchend;
-							inner_bracket.counter.no = 0;
-							//  ECMAScript spec (3-5.1) 15.10.2.5, NOTE 3.
-							//  ECMAScript 2018 (ES9) 21.2.2.5.1, Note 3.
-						}
-						sstate.push_bt(sstate.ssc);
+						sstate.push_sm(inner_bracket.core);
+						sstate.push_c(inner_bracket.counter);
+						inner_bracket.core.open_at = inner_bracket.core.close_at = sstate.srchend;
+						inner_bracket.counter.no = 0;
+						//  ECMAScript spec (3-5.1) 15.10.2.5, NOTE 3.
+						//  ECMAScript 2018 (ES9) 21.2.2.5.1, Note 3.
 					}
-					while (extra--);
+					sstate.push_bt(sstate.ssc);
+
+					if (extra)
+					{
+						--extra;
+						goto TWOMORE;
+					}
 
 					(!reverse ? bracket.core.open_at : bracket.core.close_at) = sstate.ssc.iter;
 				}

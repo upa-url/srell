@@ -1,3 +1,15 @@
+20250910; version 4.069:
+  ・ucfdata2.h, updata3.hをUnicode 17.0.0対応に更新。
+  ・regex_errorのwhat()がエラー名を返すように変更。
+  ・basic_regexのmatch(), search()にstring_viewなどに対応するための
+    overloadを追加。
+  ・misc/conftest.cppを更新。
+    1. GCC 13以降で-Wallをつけてコンパイルした時に警告が出ぬように変更。
+    2. Clang 19以降、std::char_traitsは既定の定義が削除されたことを受け
+       て、char(8|16|32)_tのうち対応していない文字型のテストを代用型で行
+       うのはやめて飛ばすように変更。
+  ・unicode/updataout3.cppを更新。
+
 20250814; version 4.068:
   ・unicode/updataout3.cppを更新。
     1. Version 4.065でSRELLの内部函数の名前を変更した影響でコンパイルで

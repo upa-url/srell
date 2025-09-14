@@ -1,3 +1,6 @@
+20250914; version 4.070:
+  ・埋込フラグ (?ims-ims) にvとyとを追加。
+
 20250910; version 4.069:
   ・ucfdata2.h, updata3.hをUnicode 17.0.0対応に更新。
   ・regex_errorのwhat()がエラー名を返すように変更。

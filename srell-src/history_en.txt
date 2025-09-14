@@ -1,3 +1,6 @@
+20250914; version 4.070:
+  * Added v and y to unbounded flag modifiers.
+
 20250910; version 4.069:
   * Updated ucfdata2.h and updata3.h to support Unicode 17.0.0.
   * Modified what() of regex_error to return an error name instead of
@@ -453,7 +456,7 @@
   * Minor improvements of ^ and $ in the multiline mode and \b, \B.
 
 20221124; version 4.007:
-  * Added support for the un-bounded flag modifiers ((?ims-ims)), which
+  * Added support for the unbounded flag modifiers ((?ims-ims)), which
     are available only at the beginning of a regular expression (the
     same as Python 3.11).
     Note: This feature is not defined in the ECMAScript specification

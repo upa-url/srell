@@ -1,6 +1,6 @@
 /*****************************************************************************
 **
-**  SRELL (std::regex-like library) version 4.069
+**  SRELL (std::regex-like library) version 4.070
 **
 **  Copyright (c) 2012-2025, Nozomu Katoo. All rights reserved.
 **
@@ -141,27 +141,27 @@ namespace srell
 	{
 		enum syntax_option_type
 		{
-			icase      = 1 << 1,
-			nosubs     = 1 << 2,
-			optimize   = 1 << 3,
-			collate    = 0,
+			icase = 1 << 1,
+			nosubs = 1 << 2,
+			optimize = 1 << 3,
+			collate = 0,
 			ECMAScript = 1 << 0,
-			basic      = 0,
-			extended   = 0,
-			awk        = 0,
-			grep       = 0,
-			egrep      = 0,
-			multiline  = 1 << 4,
+			multiline = 1 << 4,
+			basic = 0,
+			extended = 0,
+			awk = 0,
+			grep = 0,
+			egrep = 0,
 
-			//  SRELL's extension.
-			sticky      = 1 << 5,
-			dotall      = 1 << 6,	//  singleline.
+			//  SRELL's extensions.
+			sticky = 1 << 5,
+			dotall = 1 << 6,	//  singleline.
 			unicodesets = 1 << 7,
-			vmode       = unicodesets,
-			quiet       = 1 << 8,
+			vmode = unicodesets,
+			quiet = 1 << 8,
 
 			//  For internal use.
-			back_       = 1 << 9,
+			back_ = 1 << 9,
 			pflagsmask_ = (1 << 9) - 1
 		};
 
@@ -203,23 +203,23 @@ namespace srell
 	{
 		enum match_flag_type
 		{
-			match_default     = 0,
-			match_not_bol     = 1 << 0,
-			match_not_eol     = 1 << 1,
-			match_not_bow     = 1 << 2,
-			match_not_eow     = 1 << 3,
-			match_any         = 0,
-			match_not_null    = 1 << 4,
-			match_continuous  = 1 << 5,
-			match_prev_avail  = 1 << 6,
+			match_default = 0,
+			match_not_bol = 1 << 0,
+			match_not_eol = 1 << 1,
+			match_not_bow = 1 << 2,
+			match_not_eow = 1 << 3,
+			match_any = 0,
+			match_not_null = 1 << 4,
+			match_continuous = 1 << 5,
+			match_prev_avail = 1 << 6,
 
-			format_default    = 0,
-			format_sed        = 0,
-			format_no_copy    = 1 << 7,
+			format_default = 0,
+			format_sed = 0,
+			format_no_copy = 1 << 7,
 			format_first_only = 1 << 8,
 
 			//  For internal use.
-			match_match_      = 1 << 9
+			match_match_ = 1 << 9
 		};
 
 		inline match_flag_type operator&(const match_flag_type left, const match_flag_type right)
@@ -525,6 +525,7 @@ private:
 			static const ui_l32 ch_v = 0x76;	//  'v'
 			static const ui_l32 ch_w = 0x77;	//  'w'
 			static const ui_l32 ch_x = 0x78;	//  'x'
+			static const ui_l32 ch_y = 0x79;	//  'y'
 			static const ui_l32 ch_z = 0x7a;	//  'z'
 		}
 		//  char_alnum
@@ -5089,12 +5090,8 @@ private:
 					return false;
 
 				if (pos.may_contain_strings())
-				{
-					ADD_POS:
-					transform_seqdata(piece, pos, cvars);
-					astate.quantifier.set(pos.length.first, pos.length.second);
-					goto AFTER_PIECE_SET;
-				}
+					goto ADD_POS;
+
 				tmpcc.swap(pos.ranges);
 
 				astate.char_num = tmpcc.consists_of_one_character((regex_constants::icase & this->soflags & cvars.soflags) ? true : false);
@@ -5174,7 +5171,6 @@ private:
 //					astate.type = st_eol;	//  '\z'
 
 #if !defined(SRELL_NO_NAMEDCAPTURE)
-				//  Prepared for named captures.
 				case char_alnum::ch_k:	//  'k':
 					if (curpos == end || *curpos != meta_char::mc_lt)
 						return this->set_error(regex_constants::error_escape);
@@ -5197,7 +5193,12 @@ private:
 						return false;
 
 					if (pos.may_contain_strings())
-						goto ADD_POS;
+					{
+						ADD_POS:
+						transform_seqdata(piece, pos, cvars);
+						astate.quantifier.set(pos.length.first, pos.length.second);
+						goto AFTER_PIECE_SET;
+					}
 
 					if (astate.type == st_character_class)
 						astate.char_num = this->character_class.register_newclass(pos.ranges);
@@ -5382,10 +5383,6 @@ private:
 
 		if (*curpos == meta_char::mc_query)	//  '?'
 		{
-#if !defined(SRELL_FIXEDWIDTHLOOKBEHIND)
-			bool lookbehind = false;
-#endif
-
 			if (++curpos == end)
 				return this->set_error(regex_constants::error_paren);
 
@@ -5416,14 +5413,12 @@ private:
 					return this->set_error(regex_constants::error_paren);
 #endif	//  !defined(SRELL_NO_NAMEDCAPTURE)
 				}
-#if !defined(SRELL_FIXEDWIDTHLOOKBEHIND)
-				lookbehind = true;
-#endif
+				//  "(?<=" or "(?<!"
 			}
 			else
 				rbstate.quantifier.is_greedy = 0;
-				//  Sets .is_greedy to 0 for other assertions than lookbehinds. The automaton
-				//  checks .is_greedy to know whether lookbehinds or other assertions.
+				//  0: Other than lookbehind assertions.
+				//  1: Lookbehind.
 
 			switch (rbstate.char_num)
 			{
@@ -5433,7 +5428,7 @@ private:
 
 			case meta_char::mc_eq:	//  '=':
 #if !defined(SRELL_FIXEDWIDTHLOOKBEHIND)
-				cvars.soflags = lookbehind ? (cvars.soflags | regex_constants::back_) : (cvars.soflags & ~regex_constants::back_);
+				cvars.soflags = rbstate.quantifier.is_greedy ? (cvars.soflags | regex_constants::back_) : (cvars.soflags & ~regex_constants::back_);
 #endif
 
 #if defined(SRELL_ENABLE_GT)
@@ -5452,10 +5447,10 @@ private:
 			default:
 				{
 					const u32array_size_type boffset = curpos - cvars.begin;
+					ui_l32 to_be_modified = 0;
 					ui_l32 modified = 0;
 					ui_l32 localflags = cvars.soflags;
 					bool negate = false;
-					bool flagerror = false;
 
 					for (;;)
 					{
@@ -5465,10 +5460,14 @@ private:
 						case meta_char::mc_colon:	//  ':':
 							//  (?ims-ims:...)
 							if (modified)
-								goto COLON_FOUND;
+							{
+								if (modified & (regex_constants::unicodesets | regex_constants::sticky))
+									goto ERROR_PAREN;
 
-							flagerror = true;
-							break;
+								goto COLON_FOUND;
+							}
+							//  "(?-:"
+							goto ERROR_MODIFIER;
 #endif
 #if !defined(SRELL_NO_UBMOD)
 						case meta_char::mc_rbracl:	//  ')':
@@ -5482,73 +5481,64 @@ private:
 									this->soflags &= ~regex_constants::icase;
 #endif
 								}
+								else if (modified & regex_constants::sticky)
+									goto ERROR_MODIFIER;
 
 								if (boffset == 2)	//  Restricts so that unbounded forms (?ims-ims) can be used only at the beginning of an expression.
 								{
-									rbstate.type = st_roundbracket_close;
 									++curpos;
 									return true;
 								}
 							}
-							flagerror = true;	//  "(?)" or "(?-)"
-							break;
+							//  "(?)" or "(?-)"
+							goto ERROR_MODIFIER;
 #endif
 						case meta_char::mc_minus:	//  '-':
-							(negate ? flagerror : negate) = true;
+							if (negate)
+								goto ERROR_MODIFIER;
+							negate = true;
 							break;
 
 						case char_alnum::ch_i:	//  'i':
-							if (modified & regex_constants::icase)
-								flagerror = true;
-							modified |= regex_constants::icase;
-							if (!negate)
-								localflags |= regex_constants::icase;
-							else
-								localflags &= ~regex_constants::icase;
-							break;
+							to_be_modified = regex_constants::icase;
+							goto TRY_MODIFICATION;
 
 						case char_alnum::ch_m:	//  'm':
-							if (modified & regex_constants::multiline)
-								flagerror = true;
-							modified |= regex_constants::multiline;
-							if (!negate)
-								localflags |= regex_constants::multiline;
-							else
-								localflags &= ~regex_constants::multiline;
-							break;
+							to_be_modified = regex_constants::multiline;
+							goto TRY_MODIFICATION;
 
 						case char_alnum::ch_s:	//  's':
-							if (modified & regex_constants::dotall)
-								flagerror = true;
-							modified |= regex_constants::dotall;
-							if (!negate)
-								localflags |= regex_constants::dotall;
-							else
-								localflags &= ~regex_constants::dotall;
-							break;
-
-#if 0
-//  Although ECMAScript does not support v-flag modification, SRELL can.
+							to_be_modified = regex_constants::dotall;
+							goto TRY_MODIFICATION;
 
 						case char_alnum::ch_v:	//  'v':
-							if (modified & regex_constants::unicodesets)
-								flagerror = true;
-							modified |= regex_constants::unicodesets;
-							if (!negate)
-								localflags |= regex_constants::unicodesets;
-							else
-								localflags &= ~regex_constants::unicodesets;
-							break;
-#endif
+							to_be_modified = regex_constants::unicodesets;
+							goto TRY_MODIFICATION;
+
+						case char_alnum::ch_y:	//  'y':
+							to_be_modified = regex_constants::sticky;
+							goto TRY_MODIFICATION;
+
 						default:
+							ERROR_PAREN:
 							return this->set_error(regex_constants::error_paren);
+
+							TRY_MODIFICATION:
+							if (modified & to_be_modified)
+							{
+								ERROR_MODIFIER:
+								return this->set_error(regex_constants::error_modifier);
+							}
+
+							modified |= to_be_modified;
+							if (!negate)
+								localflags |= to_be_modified;
+							else
+								localflags &= ~to_be_modified;
 						}
 
-						if (flagerror)
-							return this->set_error(regex_constants::error_modifier);
-
 						if (++curpos == end)
-							return this->set_error(regex_constants::error_paren);
+							goto ERROR_PAREN;
 
 						rbstate.char_num = *curpos;
 					}
@@ -5568,12 +5558,11 @@ private:
 			++curpos;
 			piece.push_back(rbstate);
 		}
-#if !defined(SRELL_NO_NAMEDCAPTURE)
-		AFTER_EXTRB:
-#endif
-
-		if (rbstate.type == st_roundbracket_open)
+		else
 		{
+#if !defined(SRELL_NO_NAMEDCAPTURE)
+			AFTER_EXTRB:
+#endif
 			if (this->number_of_brackets > constants::max_u32value)
 				return this->set_error(regex_constants::error_complexity);
 
@@ -5590,7 +5579,7 @@ private:
 		}
 
 #if !defined(SRELL_NO_NAMEDCAPTURE)
-		const typename u32array::size_type dzsize = cvars.dupranges.size();
+		const u32array_size_type dzsize = cvars.dupranges.size();
 #endif
 
 		if (++cvars.depth > SRELL_MAX_DEPTH)

@@ -14,7 +14,7 @@ jobs:
     outputs:
       srell_new_ver: ${{ steps.getver.outputs.srell_new_ver }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Download new SRELL version if available
         id: getver

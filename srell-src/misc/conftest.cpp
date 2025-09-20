@@ -1,6 +1,6 @@
 //
 //  Conformance test program for SRELL.
-//  Version 3.006 (2025/08/23)
+//  Version 3.007 (2025/09/18)
 //
 //  This needs to be compiled and run on a system that supports
 //  an ISO-646/US-ASCII compatible encoding.
@@ -425,7 +425,12 @@ std::string parse_flagstring(
 			break;
 #endif
 		case 'y':
-			mf |= srell::regex_constants::match_continuous;
+			so |= srell::regex_constants::sticky;
+			str.push_back(*flags);
+			break;
+
+		case 'n':
+			so |= srell::regex_constants::nosubs;
 			str.push_back(*flags);
 			break;
 
@@ -645,7 +650,7 @@ bool conf_test(
 	}
 	catch (const srell::regex_error &e)
 	{
-		std::fprintf(stdout, "Error (regex_error): %d \"%s\"\n  /%s/\n", e.code(), e.what(), expfc.c_str());
+		std::fprintf(stdout, "Error (regex_error): %d \"%s\"\n\t/%s/%s;\n", e.code(), e.what(), expfc.c_str(), flagstr2.c_str());
 
 		if (errortest)
 		{

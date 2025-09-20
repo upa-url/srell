@@ -1,6 +1,6 @@
 /*****************************************************************************
 **
-**  SRELL (std::regex-like library) version 4.070
+**  SRELL (std::regex-like library) version 4.080
 **
 **  Copyright (c) 2012-2025, Nozomu Katoo. All rights reserved.
 **
@@ -1156,6 +1156,11 @@ public:
 		resize(newsize);
 		for (; oldsize < size_; ++oldsize)
 			buffer_[oldsize] = type;
+	}
+
+	void shrink(const size_type newsize)
+	{
+		size_ = newsize;
 	}
 
 	reference operator[](const size_type pos)
@@ -14916,7 +14921,7 @@ public:
 			(*this)[wpos].set(begin, constants::unicode_max_codepoint);
 		}
 		else
-			this->resize(wpos);
+			this->shrink(wpos);
 	}
 
 	bool is_overlap(const range_pairs &right) const
@@ -15592,7 +15597,7 @@ private:
 		const std::size_t numofranges = sizeof allranges / sizeof (range_pair);
 
 		if (char_class_.size() >= numofranges)
-			char_class_.resize(numofranges);
+			char_class_.shrink(numofranges);
 		else
 		{
 //			char_class_.clear();
@@ -15600,7 +15605,7 @@ private:
 		}
 
 		if (char_class_pos_.size() >= number_of_predefcls)
-			char_class_pos_.resize(number_of_predefcls);
+			char_class_pos_.shrink(number_of_predefcls);
 		else
 		{
 //			char_class_pos_.clear();
@@ -16151,6 +16156,11 @@ struct re_compiler_state
 #else
 		return false;
 #endif
+	}
+
+	bool is_nosubs() const
+	{
+		return (soflags & regex_constants::nosubs) ? true : false;
 	}
 };
 //  re_compiler_state
@@ -18206,7 +18216,7 @@ private:
 							//  (?ims-ims:...)
 							if (modified)
 							{
-								if (modified & (regex_constants::unicodesets | regex_constants::sticky))
+								if (modified & (regex_constants::unicodesets | regex_constants::sticky | regex_constants::nosubs))
 									goto ERROR_PAREN;
 
 								goto COLON_FOUND;
@@ -18264,6 +18274,10 @@ private:
 							to_be_modified = regex_constants::sticky;
 							goto TRY_MODIFICATION;
 
+						case char_alnum::ch_n:	//  'n':
+							to_be_modified = regex_constants::nosubs;
+							goto TRY_MODIFICATION;
+
 						default:
 							ERROR_PAREN:
 							return this->set_error(regex_constants::error_paren);
@@ -18295,9 +18309,8 @@ private:
 				//@fallthrough@
 
 			case meta_char::mc_colon:
-				rbstate.type = st_epsilon;
-				rbstate.char_num = epsilon_type::et_ncgopen;
-				rbstate.quantifier.atleast = this->number_of_brackets;
+				++curpos;
+				goto NCGROUP;
 			}
 
 			++curpos;
@@ -18305,21 +18318,31 @@ private:
 		}
 		else
 		{
+			if (cvars.is_nosubs())
+			{
+				NCGROUP:
+				rbstate.type = st_epsilon;
+				rbstate.char_num = epsilon_type::et_ncgopen;
+				rbstate.quantifier.atleast = this->number_of_brackets;
+			}
+			else
+			{
 #if !defined(SRELL_NO_NAMEDCAPTURE)
-			AFTER_EXTRB:
+				AFTER_EXTRB:
 #endif
-			if (this->number_of_brackets > constants::max_u32value)
-				return this->set_error(regex_constants::error_complexity);
+				if (this->number_of_brackets > constants::max_u32value)
+					return this->set_error(regex_constants::error_complexity);
 
-			rbstate.char_num = this->number_of_brackets++;
-			rbstate.next1 = 2;
-			rbstate.next2 = 1;
-			rbstate.quantifier.atleast = this->number_of_brackets;
-			piece.push_back(rbstate);
+				rbstate.char_num = this->number_of_brackets++;
+				rbstate.next1 = 2;
+				rbstate.next2 = 1;
+				rbstate.quantifier.atleast = this->number_of_brackets;
+				piece.push_back(rbstate);
 
-			rbstate.type  = st_roundbracket_pop;
-			rbstate.next1 = 0;
-			rbstate.next2 = 0;
+				rbstate.type  = st_roundbracket_pop;
+				rbstate.next1 = 0;
+				rbstate.next2 = 0;
+			}
 			piece.push_back(rbstate);
 		}
 
@@ -19356,7 +19379,7 @@ private:
 
 				if (offset != seqend)
 				{
-					branch.resize(seqlen + 1);
+					branch.shrink(seqlen + 1);
 					branch[seqlen] = jumpstate;
 
 					for (ui_l32 count = 0; offset < seqend; ++offset)

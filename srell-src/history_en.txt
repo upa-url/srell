@@ -1,3 +1,9 @@
+20250928; version 4.090:
+  * Improved memory efficiency in lookup for Unicode property names and
+    values.
+  * Removed the code intended for the no bad_alloc mode
+    (SRELL_NO_THROW 2), as supporting it was postponed indefinitely.
+
 20250920; version 4.080:
   * Implemented the nosubs option.
 

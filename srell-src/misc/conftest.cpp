@@ -880,5 +880,5 @@ int main(const int argc, const char *const argv[])
 	std::fprintf(stdout, "Results of tests: %u/%u (%.1lf%%) passed. (%u skipped).\n", num_of_tests_passed, num_of_tests, num_of_tests ? static_cast<double>(num_of_tests_passed) * 100.0 / num_of_tests : -1.0, skipped);
 //	std::fprintf(stdout, "Results of benchmarks: %u/%u passed.\n", num_of_benches_passed, num_of_benches);
 
-	return 0;
+	return static_cast<int>(num_of_tests - num_of_tests_passed);
 }

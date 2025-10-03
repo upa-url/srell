@@ -1,7 +1,0 @@
---- a/srell-src/misc/conftest.cpp
-+++ b/srell-src/misc/conftest.cpp
-@@ -883,3 +883,3 @@ int main(const int argc, const char *const argv[])
-
--	return 0;
-+	return num_of_tests_passed == num_of_tests ? 0 : 1;
- }

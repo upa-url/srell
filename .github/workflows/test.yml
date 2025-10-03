@@ -18,8 +18,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v5
-    - name: patch misc/conftest.cpp
-      run: git apply 0001-conftest.cpp.patch
     - name: cmake
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
     - name: build

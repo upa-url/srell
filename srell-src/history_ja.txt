@@ -1,3 +1,12 @@
+20251111; version 4.110:
+  ・パターンコンパイル最後に行う複数のfinalise処理を一纏めに。
+  ・アルゴリズムの中心函数4つを2つに統合。icaseフラグを変更した部分
+    (?i-i:)の速度が純粋なicase検索より遅い問題を解消（この変更によりバイ
+    ナリサイズの削減ももたらされています）。
+  ・Bidirectional iteratorによる検索時にconftestのBMH 04aと04bとがパスし
+    ないバグを修正（2.710以降）。
+  ・unicode/ucfdataout2.cppとunicode/updataout3.cppとを更新。
+
 20251010; version 4.100:
   ・intおよびsize_tのビット幅が32以上であることを求めるように。
   ・上の要件追加により、一部のコードを簡略化。

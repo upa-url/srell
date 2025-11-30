@@ -1,6 +1,6 @@
 /*****************************************************************************
 **
-**  SRELL (std::regex-like library) version 4.110
+**  SRELL (std::regex-like library) version 4.120
 **
 **  Copyright (c) 2012-2025, Nozomu Katoo. All rights reserved.
 **
@@ -70,7 +70,7 @@
 
 #if !defined(SRELL_NO_SIMD)
 #if (defined(_M_X64) && !defined(_M_ARM64EC)) || defined(__x86_64__) || defined(_M_IX86) || defined(__i386__)
-#if defined(_MSC_VER) && (_MSC_VER >= 1500)
+#if defined(_MSC_VER) && (_MSC_VER >= 1500) && !defined(__clang__)
 	#include <intrin.h>
 	#define SRELL_HAS_SSE42
 #elif defined(__SSE4_2__)
@@ -84,7 +84,7 @@
 #endif
 
 #define SRELL_AT_SSE42
-#if defined(SRELL_HAS_SSE42) && !defined(_MSC_VER)
+#if defined(SRELL_HAS_SSE42) && (!defined(_MSC_VER) || defined(__clang__))
 	#include <x86intrin.h>
 	#if !defined(__SSE4_2__)
 	#undef SRELL_AT_SSE42

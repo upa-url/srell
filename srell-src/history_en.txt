@@ -1,3 +1,7 @@
+20251130; version 4.120:
+  * Adopted a patch to fix a compilation error with clang-cl. (Thanks to
+    Rimas Misevičius for the patch.)
+
 20251111; version 4.110:
   * Unified the pattern compiler's finalise operations into one place.
   * Combined four algorithm core functions into two, to solve a matching

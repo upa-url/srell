@@ -1,6 +1,6 @@
 /*****************************************************************************
 **
-**  SRELL (std::regex-like library) version 4.120
+**  SRELL (std::regex-like library) version 4.130
 **
 **  Copyright (c) 2012-2025, Nozomu Katoo. All rights reserved.
 **
@@ -70,21 +70,25 @@
 
 #if !defined(SRELL_NO_SIMD)
 #if (defined(_M_X64) && !defined(_M_ARM64EC)) || defined(__x86_64__) || defined(_M_IX86) || defined(__i386__)
-#if defined(_MSC_VER) && (_MSC_VER >= 1500) && !defined(__clang__)
+#if defined(__SSE4_2__)
+	#define SRELL_HAS_SSE42 1
+#elif defined(__clang__)
+	#if defined(__clang_major__) && ((__clang_major__ >= 4) || ((__clang_major__ == 3) && defined(__clang_minor__) && (__clang_minor__ >= 8)))
+	#define SRELL_HAS_SSE42 1
+	#endif
+#elif defined(__GNUC__)
+	#if ((__GNUC__ >= 5) || ((__GNUC__ == 4) && defined(__GNUC_MINOR__) && (__GNUC_MINOR__ >= 9)))
+	#define SRELL_HAS_SSE42 1
+	#endif
+#elif defined(_MSC_VER) && (_MSC_VER >= 1500)
 	#include <intrin.h>
-	#define SRELL_HAS_SSE42
-#elif defined(__SSE4_2__)
-	#define SRELL_HAS_SSE42
-#elif defined(__clang_major__) && ((__clang_major__ >= 4) || ((__clang_major__ == 3) && defined(__clang_minor__) && (__clang_minor__ >= 8)))
-	#define SRELL_HAS_SSE42
-#elif defined(__GNUC__) && ((__GNUC__ >= 5) || ((__GNUC__ == 4) && defined(__GNUC_MINOR__) && (__GNUC_MINOR__ >= 9)))
-	#define SRELL_HAS_SSE42
+	#define SRELL_HAS_SSE42 2
 #endif	//  sse 4.2.
 #endif	//  x86/x64.
 #endif
 
 #define SRELL_AT_SSE42
-#if defined(SRELL_HAS_SSE42) && (!defined(_MSC_VER) || defined(__clang__))
+#if defined(SRELL_HAS_SSE42) && (SRELL_HAS_SSE42 == 1)
 	#include <x86intrin.h>
 	#if !defined(__SSE4_2__)
 	#undef SRELL_AT_SSE42

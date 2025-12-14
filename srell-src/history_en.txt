@@ -1,3 +1,8 @@
+20251214; version 4.130:
+  * Extended the change made in the previous version so that no
+    compilation error would occur even if both _MSC_VER and __GNUC__ are
+    defined at the same time.
+
 20251130; version 4.120:
   * Adopted a patch to fix a compilation error with clang-cl. (Thanks to
     Rimas Misevičius for the patch.)

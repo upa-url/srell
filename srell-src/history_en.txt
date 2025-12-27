@@ -1,3 +1,8 @@
+20251227; version 4.140:
+  * Fixed several undefined behaviour problems warned by GCC/Clang's
+    ubsan (undefined behaviour sanitizer). (Thanks to Avi Hayoun for the
+    report.)
+
 20251214; version 4.130:
   * Extended the change made in the previous version so that no
     compilation error would occur even if both _MSC_VER and __GNUC__ are

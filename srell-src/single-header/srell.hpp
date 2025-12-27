@@ -1,6 +1,6 @@
 /*****************************************************************************
 **
-**  SRELL (std::regex-like library) version 4.130
+**  SRELL (std::regex-like library) version 4.140
 **
 **  Copyright (c) 2012-2025, Nozomu Katoo. All rights reserved.
 **
@@ -1074,7 +1074,8 @@ public:
 		if (this != &right)
 		{
 			resize(right.size_);
-			std::memcpy(buffer_, right.buffer_, right.size_ * sizeof (ElemT));
+			if (right.size_)
+				std::memmove(buffer_, right.buffer_, right.size_ * sizeof (ElemT));
 		}
 		return *this;
 	}
@@ -1084,7 +1085,8 @@ public:
 		if (buffer_ != v.data_)
 		{
 			resize(v.size_);
-			std::memcpy(buffer_, v.data_, v.size_ * sizeof (ElemT));
+			if (v.size_)
+				std::memmove(buffer_, v.data_, v.size_ * sizeof (ElemT));
 		}
 		return *this;
 	}
@@ -1220,7 +1222,8 @@ public:
 		if (p != buffer_)
 		{
 			resize(len);
-			std::memcpy(buffer_, p, len * sizeof (ElemT));
+			if (len)
+				std::memmove(buffer_, p, len * sizeof (ElemT));
 		}
 	}
 
@@ -1232,18 +1235,25 @@ public:
 
 	simple_array &append(const const_pointer p, const size_type size)
 	{
-		resize(size_ + size);
-		std::memcpy(buffer_ + size_ - size, p, size * sizeof (value_type));
+		if (size)
+		{
+			resize(size_ + size);
+			std::memmove(buffer_ + size_ - size, p, size * sizeof (value_type));
+		}
 		return *this;
 	}
 
 	simple_array &append(const simple_array &right)
 	{
-		const size_type oldsize = size_;
 		const size_type rightsize = right.size_;
 
-		resize(size_ + right.size_);
-		std::memcpy(buffer_ + oldsize, right.buffer_, rightsize * sizeof (ElemT));
+		if (rightsize)
+		{
+			const size_type oldsize = size_;
+
+			resize(size_ + right.size_);
+			std::memmove(buffer_ + oldsize, right.buffer_, rightsize * sizeof (ElemT));
+		}
 		return *this;
 	}
 
@@ -1255,10 +1265,13 @@ public:
 				len = len2;
 		}
 
-		const size_type oldsize = size_;
+		if (len)
+		{
+			const size_type oldsize = size_;
 
-		resize(size_ + len);
-		std::memcpy(buffer_ + oldsize, right.buffer_ + pos, len * sizeof (ElemT));
+			resize(size_ + len);
+			std::memmove(buffer_ + oldsize, right.buffer_ + pos, len * sizeof (ElemT));
+		}
 		return *this;
 	}
 
@@ -1296,8 +1309,11 @@ public:
 
 	void insert(const size_type pos, const simple_array &right)
 	{
-		move_forwards_(pos, right.size_);
-		std::memcpy(buffer_ + pos, right.buffer_, right.size_ * sizeof (ElemT));
+		if (right.size_)
+		{
+			move_forwards_(pos, right.size_);
+			std::memmove(buffer_ + pos, right.buffer_, right.size_ * sizeof (ElemT));
+		}
 	}
 
 	void insert(const size_type destpos, const simple_array &right, size_type srcpos, size_type srclen = npos)
@@ -1308,8 +1324,11 @@ public:
 				srclen = len2;
 		}
 
-		move_forwards_(destpos, srclen);
-		std::memcpy(buffer_ + destpos, right.buffer_ + srcpos, srclen * sizeof (ElemT));
+		if (srclen)
+		{
+			move_forwards_(destpos, srclen);
+			std::memmove(buffer_ + destpos, right.buffer_ + srcpos, srclen * sizeof (ElemT));
+		}
 	}
 
 	simple_array &replace(const size_type pos, size_type count, const simple_array &right)
@@ -1318,13 +1337,19 @@ public:
 			move_forwards_(pos + count, right.size_ - count);
 		else if (count > right.size_)
 		{
-			const pointer base = buffer_ + pos;
+			const size_type rmndr = size_ - pos - count;
 
-			std::memmove(base + right.size_, base + count, (size_ - pos - count) * sizeof (ElemT));
+			if (rmndr)
+			{
+				const pointer base = buffer_ + pos;
+
+				std::memmove(base + right.size_, base + count, rmndr * sizeof (ElemT));
+			}
 			size_ -= count - right.size_;
 		}
 
-		std::memcpy(buffer_ + pos, right.buffer_, right.size_ * sizeof (ElemT));
+		if (right.size_)
+			std::memmove(buffer_ + pos, right.buffer_, right.size_ * sizeof (ElemT));
 		return *this;
 	}
 
@@ -14763,10 +14788,17 @@ public:
 
 	void join(const range_pair &right)
 	{
-		range_pair *base = &(*this)[0];
 		size_type count = this->size();
 
-		while (count)
+		if (count == 0)
+		{
+			this->push_back(right);
+			return;
+		}
+
+		range_pair *base = &(*this)[0];
+
+		do
 		{
 			size_type mid = count / 2;
 			range_pair *cp = &base[mid];
@@ -14843,6 +14875,7 @@ public:
 				return;
 			}
 		}
+		while (count);
 		this->insert(base - &(*this)[0], right);
 	}
 

@@ -7,9 +7,9 @@ import shutil
 import sys
 import urllib.request
 import zipfile
-from urllib.parse import urlparse
+from urllib.parse import urlsplit
 
-url = urlparse('https://www.akenotsuki.com/misc/srell/srell-latest')
+url = urlsplit('https://www.akenotsuki.com/misc/srell/srell-latest')
 
 version_path = 'version.txt'
 archive_path = 'srell-src.zip'

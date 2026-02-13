@@ -29,7 +29,11 @@ def write_version(version):
         file.write(version)
 
 def download_and_unzip(archive_url):
-    urllib.request.urlretrieve(archive_url, archive_path)
+    request = urllib.request.Request(archive_url, headers={
+        "User-Agent": "Mozilla/5.0"
+    })
+    with urllib.request.urlopen(request) as response, open(archive_path, "wb") as file:
+        file.write(response.read())
     print(f"Downloaded to {archive_path}", file=sys.stderr)
 
     # Replace the contents of extract_dir with the extracted files

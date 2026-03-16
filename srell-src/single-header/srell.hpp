@@ -1,6 +1,6 @@
 /*****************************************************************************
 **
-**  SRELL (std::regex-like library) version 2026.00
+**  SRELL (std::regex-like library) version 2026.01
 **
 **  Copyright (c) 2012-2026, Nozomu Katoo. All rights reserved.
 **
@@ -31,7 +31,7 @@
 */
 
 #ifndef SRELL_HPP_
-#define SRELL_HPP_ 202600
+#define SRELL_HPP_ 202601
 
 #include <climits>
 #include <cwchar>
@@ -19560,7 +19560,8 @@ private:
 
 							if (prevstate.is_asterisk_or_plus_for_onelen_atom())
 							{
-								prevstate.next1 = 2;
+								brs.next1 = prevstate.farnext() + brs.next1;
+								prevstate.next1 = 1;
 								prevstate.next2 = 0;
 								prevstate.char_num = epsilon_type::et_fmrbckrf;
 							}

@@ -1,3 +1,7 @@
+20260316; version 2026.01:
+  ・Versions 4.001-4.003での修正とrewinderとの相性が悪さに由来する後方参
+    照バグを修正（報告してくださったRimas Misevičius氏に感謝します）。
+
 20260316; version 2026.00:
   ・Include guard名を変更。値にヴァージョン番号を定義。
   ・match_results::size_typeの定義を簡略化。

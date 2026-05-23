@@ -1,3 +1,9 @@
+20260523; version 2026.03:
+  * Applied the same change as in 2026.02 to {n,m}?.
+  * Modified to prioritise memchr() over _mm_cmpestri() for char/char8_t
+    if AVX2 is available.
+  * Addressed a warning in GCC 16 for regex_error.
+
 20260502; version 2026.02:
   * Addressed an issue that caused search with a regex containing *? or
     +? could slow down because of an optimisation side effect.

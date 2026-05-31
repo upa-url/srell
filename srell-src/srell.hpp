@@ -1,6 +1,6 @@
 /*****************************************************************************
 **
-**  SRELL (std::regex-like library) version 2026.03
+**  SRELL (std::regex-like library) version 2026.04
 **
 **  Copyright (c) 2012-2026, Nozomu Katoo. All rights reserved.
 **
@@ -31,7 +31,7 @@
 */
 
 #ifndef SRELL_HPP_
-#define SRELL_HPP_ 202603
+#define SRELL_HPP_ 202604
 
 #include <climits>
 #include <cwchar>
@@ -5033,12 +5033,12 @@ private:
 
 			switch (astate.char_num)
 			{
-			case meta_char::mc_rbraop:	//  '(':
+			case meta_char::mc_rbraop:	//  '('
 				if (!parse_group(piece, astate.quantifier, curpos, end, cvars))
 					return false;
 				goto AFTER_PIECE_SET;
 
-			case meta_char::mc_sbraop:	//  '[':
+			case meta_char::mc_sbraop:	//  '['
 				pos.clear();
 
 				if (!parse_unicharset(pos, curpos, end, cvars))
@@ -5068,7 +5068,7 @@ private:
 
 				goto SKIP_ICASE_CHECK_FOR_CHAR;
 
-			case meta_char::mc_escape:	//  '\\':
+			case meta_char::mc_escape:	//  '\\'
 				if (curpos == end)
 					return this->set_error(regex_constants::error_escape);
 
@@ -5103,25 +5103,35 @@ private:
 
 				switch (astate.char_num)
 				{
-				case char_alnum::ch_B:	//  'B':
+				case char_alnum::ch_B:	//  \B.
 					astate.flags = sflags::is_not;
 					//@fallthrough@
 
-				case char_alnum::ch_b:	//  'b':
+				case char_alnum::ch_b:	//  \b.
 					astate.type = st_boundary;	//  \b, \B.
 					astate.quantifier.reset(0);
 					astate.char_num = static_cast<ui_l32>(!cvars.is_icase() ? re_character_class::word : re_character_class::icase_word);	//  \w, \W.
 					break;
 
-//				case char_alnum::ch_A:	//  'A':
-//					astate.type = st_bol;	//  '\A'
-//				case char_alnum::ch_Z:	//  'Z':
-//					astate.type = st_eol;	//  '\Z'
-//				case char_alnum::ch_z:	//  'z':
-//					astate.type = st_eol;	//  '\z'
+				case char_alnum::ch_A:	//  \A.
+					goto PUSH_CARET;
+
+				case char_alnum::ch_z:	//  \z.
+					goto PUSH_DOLLAR;
+
+				case char_alnum::ch_Z:	//  \Z.
+				{
+					//  "(?=(?:\r\n?|[\n\u2028\u2029])?\z)"
+					static const ui_l32 escZ[] = { 0x28, 0x3f, 0x3d, 0x28, 0x3f, 0x3a, 0x0d, 0x0a, 0x3f, 0x7c, 0x5b, 0x0a, 0x2028, 0x2029, 0x5d, 0x29, 0x3f, 0x5c, 0x7a, 0x29 };
+					const ui_l32 *begin = escZ;
+					if (!make_nfa_states(piece, astate.quantifier, begin, begin + 20, cvars))
+						return false;
+					astate.quantifier.reset(0);
+					goto AFTER_PIECE_SET;
+				}
 
 #if !defined(SRELL_NO_NAMEDCAPTURE)
-				case char_alnum::ch_k:	//  'k':
+				case char_alnum::ch_k:	//  \k.
 					if (curpos == end || *curpos != meta_char::mc_lt)
 						return this->set_error(regex_constants::error_escape);
 					else
@@ -5156,7 +5166,7 @@ private:
 
 				break;
 
-			case meta_char::mc_period:	//  '.':
+			case meta_char::mc_period:	//  '.'
 				astate.type = st_character_class;
 #if !defined(SRELL_NO_SINGLELINE)
 				if (cvars.is_dotall())
@@ -5173,25 +5183,27 @@ private:
 				}
 				break;
 
-			case meta_char::mc_caret:	//  '^':
+			case meta_char::mc_caret:	//  '^'
+				if (cvars.is_multiline())
+					astate.flags = sflags::multiline;
+				PUSH_CARET:
 				astate.type = st_bol;
 				astate.char_num = static_cast<ui_l32>(re_character_class::newline);
 				astate.quantifier.reset(0);
-				if (cvars.is_multiline())
-					astate.flags = sflags::multiline;
 				break;
 
-			case meta_char::mc_dollar:	//  '$':
+			case meta_char::mc_dollar:	//  '$'
+				if (cvars.is_multiline())
+					astate.flags = sflags::multiline;
+				PUSH_DOLLAR:
 				astate.type = st_eol;
 				astate.char_num = static_cast<ui_l32>(re_character_class::newline);
 				astate.quantifier.reset(0);
-				if (cvars.is_multiline())
-					astate.flags = sflags::multiline;
 				break;
 
-			case meta_char::mc_astrsk:	//  '*':
-			case meta_char::mc_plus:	//  '+':
-			case meta_char::mc_query:	//  '?':
+			case meta_char::mc_astrsk:	//  '*'
+			case meta_char::mc_plus:	//  '+'
+			case meta_char::mc_query:	//  '?'
 			case meta_char::mc_cbraop:	//  '{'
 				return this->set_error(regex_constants::error_badrepeat);
 
@@ -5230,19 +5242,19 @@ private:
 				{
 					switch (*curpos)
 					{
-					case meta_char::mc_astrsk:	//  '*':
+					case meta_char::mc_astrsk:	//  '*'
 						--quantifier.atleast;
 						//@fallthrough@
 
-					case meta_char::mc_plus:	//  '+':
+					case meta_char::mc_plus:	//  '+'
 						quantifier.set_infinity();
 						break;
 
-					case meta_char::mc_query:	//  '?':
+					case meta_char::mc_query:	//  '?'
 						--quantifier.atleast;
 						break;
 
-					case meta_char::mc_cbraop:	//  '{':
+					case meta_char::mc_cbraop:	//  '{'
 						++curpos;
 						quantifier.atleast = translate_numbers(curpos, end, 10, 1, 0, constants::max_u32value);
 
@@ -5360,11 +5372,11 @@ private:
 
 			switch (rbstate.char_num)
 			{
-			case meta_char::mc_exclam:	//  '!':
+			case meta_char::mc_exclam:	//  '!'
 				rbstate.flags = sflags::is_not;
 				//@fallthrough@
 
-			case meta_char::mc_eq:	//  '=':
+			case meta_char::mc_eq:	//  '='
 #if !defined(SRELL_FIXEDWIDTHLOOKBEHIND)
 				cvars.soflags = rbstate.quantifier.is_greedy ? (cvars.soflags | regex_constants::back_) : (cvars.soflags & ~regex_constants::back_);
 #endif
@@ -5395,7 +5407,7 @@ private:
 						switch (rbstate.char_num)
 						{
 #if !defined(SRELLDBG_NO_MODIFIERS)
-						case meta_char::mc_colon:	//  ':':
+						case meta_char::mc_colon:	//  ':'
 							//  (?ims-ims:...)
 							if (modified)
 							{
@@ -5408,7 +5420,7 @@ private:
 							goto ERROR_MODIFIER;
 #endif
 #if !defined(SRELL_NO_UBMOD)
-						case meta_char::mc_rbracl:	//  ')':
+						case meta_char::mc_rbracl:	//  ')'
 							if (modified)
 							{
 								cvars.soflags = localflags;
@@ -5428,33 +5440,33 @@ private:
 							//  "(?)" or "(?-)"
 							goto ERROR_MODIFIER;
 #endif
-						case meta_char::mc_minus:	//  '-':
+						case meta_char::mc_minus:	//  '-'
 							if (negate)
 								goto ERROR_MODIFIER;
 							negate = true;
 							break;
 
-						case char_alnum::ch_i:	//  'i':
+						case char_alnum::ch_i:	//  'i'
 							to_be_modified = regex_constants::icase;
 							goto TRY_MODIFICATION;
 
-						case char_alnum::ch_m:	//  'm':
+						case char_alnum::ch_m:	//  'm'
 							to_be_modified = regex_constants::multiline;
 							goto TRY_MODIFICATION;
 
-						case char_alnum::ch_s:	//  's':
+						case char_alnum::ch_s:	//  's'
 							to_be_modified = regex_constants::dotall;
 							goto TRY_MODIFICATION;
 
-						case char_alnum::ch_v:	//  'v':
+						case char_alnum::ch_v:	//  'v'
 							to_be_modified = regex_constants::unicodesets;
 							goto TRY_MODIFICATION;
 
-						case char_alnum::ch_y:	//  'y':
+						case char_alnum::ch_y:	//  'y'
 							to_be_modified = regex_constants::sticky;
 							goto TRY_MODIFICATION;
 
-						case char_alnum::ch_n:	//  'n':
+						case char_alnum::ch_n:	//  'n'
 							to_be_modified = regex_constants::nosubs;
 							goto TRY_MODIFICATION;
 
@@ -6188,27 +6200,27 @@ private:
 			//  Predefined classes.
 			switch (eastate.char_num)
 			{
-			case char_alnum::ch_D:	//  'D':
+			case char_alnum::ch_D:	//  \D.
 				eastate.flags = sflags::is_not;
 				//@fallthrough@
 
-			case char_alnum::ch_d:	//  'd':
+			case char_alnum::ch_d:	//  \d.
 				eastate.char_num = static_cast<ui_l32>(re_character_class::digit);	//  \d, \D.
 				break;
 
-			case char_alnum::ch_S:	//  'S':
+			case char_alnum::ch_S:	//  \S.
 				eastate.flags = sflags::is_not;
 				//@fallthrough@
 
-			case char_alnum::ch_s:	//  's':
+			case char_alnum::ch_s:	//  \s.
 				eastate.char_num = static_cast<ui_l32>(re_character_class::space);	//  \s, \S.
 				break;
 
-			case char_alnum::ch_W:	//  'W':
+			case char_alnum::ch_W:	//  \W.
 				eastate.flags = sflags::is_not;
 				//@fallthrough@
 
-			case char_alnum::ch_w:	//  'w':
+			case char_alnum::ch_w:	//  \w.
 				eastate.char_num = static_cast<ui_l32>(!cvars.is_icase() ? re_character_class::word : re_character_class::icase_word);	//  \w, \W.
 				break;
 
@@ -7702,7 +7714,6 @@ private:
 
 				if (s.next1 > s.next2)
 					delib = -1;
-
 			}
 			else if (s.type == st_backreference)
 				return 1;
@@ -9292,11 +9303,15 @@ public:
 
 #if !defined(SRELLDBG_NO_SCFINDER)
 SRELL_NO_VCWARNING(4127)
-					if ((simd_ac::is_ci == 0
+					if ((this->NFA_states[0].char_num & static_cast<ui_l32>(utf_traits::ecmask))
 #if defined(SRELL_HAS_SSE42)
-						|| (sizeof (typename bi_traits::value_type) == 1 && (cpu_checker<int>::x86simd() & 2))
+						&& ((simd_ac::is_ci == 0) || ((cpu_checker<int>::x86simd() & 2)
+#if !defined(_MSC_VER) || (defined(_HAS_CXX17) && _HAS_CXX17 && (!defined(_MSVC_STL_UPDATE) || (_MSVC_STL_UPDATE < 202408L)))
+							&& (sizeof (typename bi_traits::value_type) != 2)
 #endif
-						) && (this->NFA_states[0].char_num & static_cast<ui_l32>(utf_traits::ecmask)))
+						))
+#endif
+					)
 SRELL_NO_VCWARNING_END
 					{
 						reason = do_search_sc(sstate, ci_checker());
@@ -9950,7 +9965,7 @@ SRELL_NO_VCWARNING_END
 				sstate.pop_c(sstate.counter[sstate.ssc.state->char_num]);
 				goto NOT_MATCHED0;
 
-			case st_roundbracket_open:	//  '(':
+			case st_roundbracket_open:
 				{
 					submatch_type &bracket = sstate.bracket[sstate.ssc.state->char_num];
 					const re_quantifier &sq = sstate.ssc.state->quantifier;
@@ -9978,7 +9993,7 @@ SRELL_NO_VCWARNING_END
 				sstate.ssc.state = sstate.ssc.state->next_state1;
 				continue;
 
-			case st_roundbracket_pop:	//  '/':
+			case st_roundbracket_pop:
 				{
 					for (ui_l32 brno = sstate.ssc.state->quantifier.atmost; brno >= sstate.ssc.state->quantifier.atleast; --brno)
 					{
@@ -9995,7 +10010,7 @@ SRELL_NO_VCWARNING_END
 				}
 				goto NOT_MATCHED0;
 
-			case st_roundbracket_close:	//  ')':
+			case st_roundbracket_close:
 				{
 					submatch_type &bracket = sstate.bracket[sstate.ssc.state->char_num];
 					submatchcore_type &brc = bracket.core;
@@ -10086,7 +10101,7 @@ SRELL_NO_VCWARNING_END
 
 				continue;
 
-			case st_backreference:	//  '\\':
+			case st_backreference:
 				{
 					const submatch_type &bracket = sstate.bracket[sstate.ssc.state->char_num];
 					const submatchcore_type &brc = bracket.core;
@@ -10268,7 +10283,7 @@ SRELL_NO_VCWARNING_END
 				}
 				goto NOT_MATCHED0;
 
-			case st_bol:	//  '^':
+			case st_bol:
 				if (sstate.ssc.iter == sstate.lblim && !(sstate.reallblim != sstate.lblim || (sstate.flags & regex_constants::match_prev_avail) != 0))
 				{
 					if (!(sstate.flags & regex_constants::match_not_bol))
@@ -10295,7 +10310,7 @@ SRELL_NO_VCWARNING_END
 				}
 				goto NOT_MATCHED;
 
-			case st_eol:	//  '$':
+			case st_eol:
 				if (sstate.ssc.iter == sstate.srchend)
 				{
 					if (!(sstate.flags & regex_constants::match_not_eol))

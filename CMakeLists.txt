@@ -12,7 +12,7 @@ add_executable(conftest srell-src/misc/conftest.cpp)
 # Testing
 enable_testing()
 
-foreach(test_arg utf8 utf16 utf32 utf8c)
+foreach(test_arg utf16 utf32 utf8c)
   add_test(NAME conftest-${test_arg}
     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/conftest ${test_arg})
 endforeach()

@@ -7,7 +7,7 @@ import shutil
 import sys
 import urllib.request
 import zipfile
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urljoin
 
 url = urlsplit('https://www.akenotsuki.com/misc/srell/srell-latest')
 
@@ -54,22 +54,23 @@ try:
     response = conn.getresponse()
 
     if 300 <= response.status < 400 and 'Location' in response.headers:
-        archive_url = response.headers['Location']
-        # get version from archive_url
-        match = re.search(r"([0-9]+(_[0-9]+)+)\.zip$", archive_url)
+        archive_loc = response.headers['Location']
+        # get version from archive_loc
+        match = re.search(r"([0-9]+(_[0-9]+)+)\.zip$", archive_loc)
         if match is not None:
             version_new = match.group(1).replace('_', '.')
             # local version from file
             version = read_version()
 
             if version != version_new:
+                archive_url = urljoin(url.geturl(), archive_loc)
                 print(f"Found new version: {version_new}", file=sys.stderr)
                 print(f"Download URL: {archive_url}", file=sys.stderr)
                 download_and_unzip(archive_url)
                 write_version(version_new)
                 print(version_new)
         else:
-            print(f"ERROR: A version cannot be found in the URL:\n{archive_url}",
+            print(f"ERROR: A version cannot be found in the Location:\n{archive_loc}",
                 file=sys.stderr)
     else:
         print("ERROR: No redirection", file=sys.stderr)

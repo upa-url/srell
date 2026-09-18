@@ -1,6 +1,6 @@
 /*****************************************************************************
 **
-**  SRELL (std::regex-like library) version 2026.06
+**  SRELL (std::regex-like library) version 2026.07
 **
 **  Copyright (c) 2012-2026, Nozomu Katoo. All rights reserved.
 **
@@ -31,7 +31,7 @@
 */
 
 #ifndef SRELL_HPP_
-#define SRELL_HPP_ 202606
+#define SRELL_HPP_ 202607
 
 #include <climits>
 #include <cwchar>

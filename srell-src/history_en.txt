@@ -1,3 +1,7 @@
+20260917; version 2026.07:
+  * Updated srell_ucfdata2.h and srell_updata3.h to support Unicode
+    18.0.0.
+
 20260820; version 2026.06:
   * Modified the pattern compiler not to check beyond a repeated group
     when deciding a starting character set for matching.
@@ -95,7 +99,8 @@
   * Added v and y to unbounded flag modifiers.
 
 20250910; version 4.069:
-  * Updated ucfdata2.h and updata3.h to support Unicode 17.0.0.
+  * Updated srell_ucfdata2.h and srell_updata3.h to support Unicode
+    17.0.0.
   * Modified what() of regex_error to return an error name instead of
     "regex_error".
   * Added overloads to match() and search() of basic_regex for
@@ -221,7 +226,8 @@
   * Updated unicode/updataout3.cpp.
 
 20240911; version 4.056:
-  * Updated ucfdata2.h and updata3.h to support Unicode 16.0.0.
+  * Updated srell_ucfdata2.h and srell_updata3.h to support Unicode
+    16.0.0.
   * Other minor modifications.
 
 20240904; version 4.055:
@@ -391,7 +397,8 @@
   * Improved several internal functions that call the automaton.
 
 20230913; version 4.031:
-  * Updated ucfdata2.h and updata3.h to support Unicode 15.1.0.
+  * Updated srell_ucfdata2.h and srell_updata3.h to support Unicode
+    15.1.0.
   * Updated updataout3.cpp so that the "Unknown" value can be used as a
     value for Script/Script_Extensions of Unicode property escapes.
     Although this value is mentioned in Scripts.txt, SRELL did not

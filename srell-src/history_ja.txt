@@ -1,3 +1,6 @@
+20260917; version 2026.07:
+  ・srell_ucfdata2.h, srell_updata3.hをUnicode 18.0.0対応に更新。
+
 20260820; version 2026.06:
   ・照合開始文字を決める時、繰り返しのグループを超えて探索を行わぬように
     変更。
@@ -87,7 +90,7 @@
   ・埋込フラグ (?ims-ims) にvとyとを追加。
 
 20250910; version 4.069:
-  ・ucfdata2.h, updata3.hをUnicode 17.0.0対応に更新。
+  ・srell_ucfdata2.h, srell_updata3.hをUnicode 17.0.0対応に更新。
   ・regex_errorのwhat()がエラー名を返すように変更。
   ・basic_regexのmatch(), search()にstring_viewなどに対応するための
     overloadを追加。
@@ -198,7 +201,7 @@
   ・unicode/updataout3.cppを更新。
 
 20240911; version 4.056:
-  ・ucfdata2.h, updata3.hをUnicode 16.0.0対応に更新。
+  ・srell_ucfdata2.h, srell_updata3.hをUnicode 16.0.0対応に更新。
   ・その他細々とした変更など。
 
 20240904; version 4.055:
@@ -350,7 +353,7 @@
   ・オートマトンの呼び出し部を整理。
 
 20230913; version 4.031:
-  ・ucfdata2.h, updata3.hをUnicode 15.1.0対応に更新。
+  ・srell_ucfdata2.h, srell_updata3.hをUnicode 15.1.0対応に更新。
   ・updataout3.cppを更新。Unicode property escapeのScriptまたは
     Script_Extensionsで指定できる値に"Unknown"を追加。
     この値はScripts.txt内で言及されているものの、ECMAScript仕様書の「対

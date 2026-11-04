@@ -1,6 +1,6 @@
 //
 //  Conformance test program for SRELL.
-//  Version 3.009 (2026/08/16)
+//  Version 2026.02 (2026/11/01)
 //
 //  This needs to be compiled and run on a system that supports
 //  an ISO-646/US-ASCII compatible encoding.
@@ -325,8 +325,8 @@ std::string utf16_to_utf8c(const std::basic_string<Char16> &u16)
 				const Char16 surlead = ((ucp & 0x3ff) + 0x40);
 				//  110110aa aabbbbcc  110111cc ddddeeee
 				//  11110aaa 10aabbbb  10ccccdd 10ddeeee
-				out.push_back(static_cast<char>(((surlead >> 8) & 7) | 0xf0));
-				out.push_back(static_cast<char>(((surlead >> 2) & 0x3f) | 0x80));
+				out.push_back(static_cast<char>(0xf0 | ((surlead >> 8) & 7)));
+				out.push_back(static_cast<char>(0x80 | ((surlead >> 2) & 0x3f)));
 				out.push_back(static_cast<char>(0x80 | ((surlead << 4) & 0x30) | ((surtail >> 6) & 0xf)));
 				out.push_back(static_cast<char>(0x80 | (surtail & 0x3f)));
 				continue;
@@ -391,7 +391,6 @@ namespace otherflags
 	static const type matchall = 1 << 3;
 	static const type errortest = 1 << 4;
 	static const type namedgroup = 1 << 5;
-	static const type print_states = 1 << 6;
 }
 
 std::string parse_flagstring(
@@ -612,7 +611,7 @@ bool conf_test(
 				if (mr[i].matched)
 				{
 					matched = mr[i].str() + gname;
-					msg = simple_conv<string_type>("\"") + matched + simple_conv<string_type>("\"") + simple_conv<string_type>(" (%u-%u)");
+					msg = simple_conv<string_type>("\"") + matched + simple_conv<string_type>("\"") + simple_conv<string_type>(" (%u+%u)");
 				}
 				else
 					msg = matched = simple_conv<string_type>("(undefined)") + gname;
@@ -637,7 +636,7 @@ bool conf_test(
 
 				msg += simple_conv<string_type>("\n");
 				const std::string msgfc(convert_to_utf8c(msg));
-				std::fprintf(stdout, msgfc.c_str(), mr.position(i), mr.length(i));
+				std::fprintf(stdout, msgfc.c_str(), static_cast<unsigned int>(mr.position(i)), static_cast<unsigned int>(mr.length(i)));
 				if (global)
 					break;
 			}
@@ -835,6 +834,11 @@ int main(const int argc, const char *const argv[])
 
 	const constants::utf_type utype = opts.utype;
 	const bool is_utf8 = utype == constants::utf8 || utype == constants::utf8c;
+	const bool is_utf16 = utype == constants::utf16
+#if defined(SRELL_HAS_UTF16W)
+		|| utype == constants::utf16or32w
+#endif
+		;
 
 	if (opts.errorno)
 		return opts.errorno;
@@ -854,6 +858,13 @@ int main(const int argc, const char *const argv[])
 			++skipped;
 			continue;
 		}
+		else if ((t->type & 16) && !is_utf16)
+		{
+			std::fputs("[Info] This test is specific to UTF-16. Skipped...\n\n", stdout);
+			++skipped;
+			continue;
+		}
+
 #if defined(SRELL_LINEAR)
 		if (t->type & 2)
 		{

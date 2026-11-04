@@ -1,4 +1,4 @@
-//  Generated on 2026/08/16.
+//  Generated on 2026/11/01.
 
 struct testdata
 {
@@ -3216,6 +3216,49 @@ testdata tests[] = {
 	STR0("b")
 	STR0("d")
 	STR0("e")
+},
+	//  UTF-16 surrogate.
+{
+	16, "UTF-16: Low surrogate.\n",
+	"G",
+	RE("\\udc00"),
+	STR("\\u{1B000}\\u{DC00}"),
+	0, 1,
+	STR0("\\uDC00")
+},
+{
+	16, "UTF-16: Low surrogate range.\n",
+	"G",
+	RE("[\\udc00-\\udfff]"),
+	STR("\\u{1B001}\\u{DC01}3456789ABCDEF"),	//  For SIMD.
+	0, 1,
+	STR0("\\uDC01")
+},
+{
+	16, "UTF-16: Low surrogate with BMH.\n",
+	"G",
+	RE("\\udc00a"),
+	STR("\\u{1B000}a\\u{DC00}a"),
+	0, 1,
+	STR0("\\uDC00a")
+},
+{
+	16, "UTF-16: High surrogate with BMH.\n",
+	"G",
+	RE("a\\ud82c"),
+	STR("a\\u{1B000}a\\u{D82C}"),
+	0, 1,
+	STR0("a\\uD82C")
+},
+	//  Proposed fix: https://github.com/tc39/ecma262/issues/128#issuecomment-6379961289
+{
+	16, "UTF-16: Pointing to a low surrogate.\n",
+	"3G",
+	RE("."),
+	STR("\\u{1B000}\\uDC00"),
+	1, 2,
+	STR0("\\u{1B000}")
+	STR0("\\uDC00")
 },
 {
 	1, NULL,

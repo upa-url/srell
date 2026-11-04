@@ -1,3 +1,11 @@
+20261103; version 2026.09:
+  * Refixed the third fix in the previous version in a different way.
+  * Along with the above change, modified so that the repetition of a
+    capturing group () that contains assertions only would be performed
+    once at most even if the group has a quantifier.
+  * Modified for expressions like /\uDC00.*\uD800/ not to match a half
+    of a surrogate pair in UTF-16 search.
+
 20261028; version 2026.08:
   * Fixed a rewinder bug where /.(?:aa){2}/ against "aaaaa" had matched
     "aaa" instead of "aaaaa" since version 2026.06.
@@ -6,6 +14,9 @@
   * Fixed a parser issue where such an expression as (?:^)* had caused a
     compilation error. Conditions: (?:) contains only a single
     assertion, any of ^ $ \b or \B, and the group is repeated.
+  * Fixed an issue where /(?=(?:(a??))?)/ against "a" returns "" as $1
+    instead of "a". (Because (?:)? does not accept a null match,
+    backtracking is required).
 
 20260917; version 2026.07:
   * Updated srell_ucfdata2.h and srell_updata3.h to support Unicode

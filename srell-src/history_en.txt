@@ -1,3 +1,15 @@
+20261111; version 2026.10:
+  * Fixed a bug where /[[]]/ in v-mode had been compiled as if
+    /[\u0000]/.
+  * Fixed a bug where in multiple operations at the same level like
+    /[A&&B&&C]/, the contents of character set B had been carried over
+    to character set C. (This is not a problem if C is a non-inverted
+    character set, but if it is an inverted character class that begins
+    with ^, B&&C results in an empty set).
+  * Fixed a bug where case-unfolding had not been performed for the
+    character set to the left of -- when subtracting character sets in
+    v-mode with icase.
+
 20261103; version 2026.09:
   * Refixed the third fix in the previous version in a different way.
   * Along with the above change, modified so that the repetition of a

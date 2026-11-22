@@ -1,4 +1,4 @@
-//  Generated on 2026/11/01.
+//  Generated on 2026/11/21.
 
 struct testdata
 {
@@ -746,6 +746,7 @@ testdata tests[] = {
 	STR0("26 <day>")
 	STR0("2024 <year>")
 },
+
 	//  Lookbehind.
 
 {
@@ -1492,6 +1493,14 @@ testdata tests[] = {
 	STR("ac"),
 	0, 0,
 	STR0("")
+},
+{
+	0, "OSEC, BO2 02: Ncroup.\n",
+	"",
+	RE("(?:a|a)a"),
+	STR("baaac"),
+	0, 1,
+	STR0("aa")
 },
 	//  Entry point selector version 3 (Implemented in SRELL 2026.06).
 {

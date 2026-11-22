@@ -1,11 +1,31 @@
+20261121; version 2026.11:
+  * Added heap_limit() member function to match_results, which specifies
+    the maximum amount of heap to be used as a stack during matching
+    (there was no limit up to the previous version). This is effective
+    only if the iterators passed to a match or search function are
+    trivially_copyable.
+  * Introduced the SRELL_HEAP_LIMIT macro to set the above default
+    value. If not defined explicitly, the default value is 8 MB.
+  * If the iterators passed to a match or search function are
+    trivially_copyable, now error_stack is thrown or returned instead of
+    std::bad_alloc when the stack is exhausted.
+  * Added backtrack_limit member to basic_regex as an alias to
+    limit_counter.
+  * Introduced the SRELL_BACKTRACK_LIMIT macro for setting the above
+    default value.
+  * Now a value explicitly set to backtrack_limit remains even after a
+    new pattern is compiled.
+  * Modified so that when a named backreference evaluates to "", even if
+    the backreference is followed by a quantifier, such as \k<name>+,
+    the quantifier will be ignored. (Aligned the behaviour with classic
+    numeric backreferences.)
+
 20261111; version 2026.10:
   * Fixed a bug where /[[]]/ in v-mode had been compiled as if
     /[\u0000]/.
-  * Fixed a bug where in multiple operations at the same level like
-    /[A&&B&&C]/, the contents of character set B had been carried over
-    to character set C. (This is not a problem if C is a non-inverted
-    character set, but if it is an inverted character class that begins
-    with ^, B&&C results in an empty set).
+  * Fixed a bug where in multiple operations using nested character
+    classes at the same level, such as /[[A]&&[B]&&[C]]/, the contents
+    of character set B had been carried over to character set C.
   * Fixed a bug where case-unfolding had not been performed for the
     character set to the left of -- when subtracting character sets in
     v-mode with icase.
